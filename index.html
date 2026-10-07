@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de Listagem de Frequência</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2A45;
+    --ink-soft:#3A4A63;
+    --paper:#F4F1E8;
+    --card:#FFFFFF;
+    --gold:#007DC3;
+    --gold-soft:#16a9ff;
+    --line:#95c1fa;
+    --slate:#67758C;
+    --danger:#A23B3B;
+    --sidebar-w:380px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;}
+  .app{display:flex;min-height:100vh;}
+
+  .imagens-laterais{width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .cover-image{width:70px;height:70px;object-fit:contain;}
+  .cover-image2{width:180px;height:56px;object-fit:contain;}
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:var(--sidebar-w);flex:none;background:var(--card);border-right:1px solid var(--line);
+    padding:28px 24px 40px;position:sticky;top:0;height:100vh;overflow-y:auto;
+  }
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:22px;}
+  .brand-mark{
+    width:34px;height:34px;border-radius:8px;background:linear-gradient(155deg,var(--ink) 0%,#2C4368 100%);
+    display:flex;align-items:center;justify-content:center;color:var(--gold-soft);
+    font-family:'Source Serif 4',serif;font-weight:700;font-size:16px;flex:none;
+  }
+  .brand-text h1{font-family:'Source Serif 4',serif;font-size:16px;font-weight:600;margin:0;line-height:1.15;}
+  .brand-text span{font-size:11px;color:var(--slate);letter-spacing:.04em;text-transform:uppercase;}
+
+  .panel-section{margin-bottom:24px;}
+  .panel-section + .panel-section{border-top:1px solid var(--line);padding-top:20px;}
+  .panel-label{
+    font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:6px;
+  }
+  .panel-label .num{
+    width:16px;height:16px;border-radius:50%;background:var(--gold);color:#fff;font-size:9.5px;
+    display:flex;align-items:center;justify-content:center;font-weight:700;letter-spacing:0;
+  }
+  .hint{font-size:11.5px;color:var(--slate);line-height:1.5;margin:0 0 10px;}
+
+  textarea{
+    width:100%;min-height:110px;resize:vertical;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.5;
+    border:1px solid var(--line);border-radius:8px;padding:10px 11px;background:#FBFAF6;color:var(--ink);
+  }
+  textarea:focus,input:focus,select:focus{outline:2px solid var(--gold-soft);outline-offset:1px;border-color:var(--gold);}
+
+  .file-drop{
+    display:block;margin-top:8px;border:1.5px dashed var(--line);border-radius:8px;padding:12px;
+    text-align:center;font-size:12px;color:var(--slate);cursor:pointer;transition:.15s;
+  }
+  .file-drop:hover{border-color:var(--gold);background:#F0F8FF;}
+  .file-drop input{display:none;}
+
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12.5px;font-weight:500;margin-bottom:5px;color:var(--ink-soft);}
+  .field input[type=text], .field input[type=number], .field select{
+    width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;
+    font-size:13px;font-family:'Inter',sans-serif;color:var(--ink);background:#FBFAF6;
+  }
+  .check-line{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:8px;color:var(--ink-soft);cursor:pointer;}
+  .check-line input{accent-color:var(--gold);}
+
+  .stat-row{display:flex;gap:8px;margin-top:4px;}
+  .stat{flex:1;background:#F0F8FF;border:1px solid var(--gold-soft);border-radius:8px;padding:9px 10px;text-align:center;}
+  .stat b{display:block;font-family:'Source Serif 4',serif;font-size:19px;color:var(--ink);}
+  .stat span{font-size:10px;color:var(--slate);text-transform:uppercase;letter-spacing:.04em;}
+
+  /* colunas */
+  .col-list{border:1px solid var(--line);border-radius:8px;background:#FBFAF6;}
+  .col-item{display:grid;grid-template-columns:1fr 104px;gap:6px;padding:8px;border-bottom:1px solid var(--line);align-items:center;}
+  .col-item:last-child{border-bottom:none;}
+  .col-item input[type=text], .col-item select{
+    width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:#fff;font-family:'Inter',sans-serif;
+  }
+  .col-item .orig{grid-column:1/-1;font-size:10px;color:var(--slate);font-family:'JetBrains Mono',monospace;margin-bottom:-2px;}
+
+  .group-cols{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;
+    font-size:12px;cursor:pointer;background:#fff;color:var(--ink-soft);user-select:none;
+  }
+  .chip input{display:none;}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+  .search-box{width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:7px;font-size:12.5px;margin-bottom:8px;background:#FBFAF6;}
+  .school-list{max-height:230px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;background:#FBFAF6;}
+  .school-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12.5px;cursor:pointer;}
+  .school-item:last-child{border-bottom:none;}
+  .school-item:hover{background:#EAF4FD;}
+  .school-item input{flex:none;accent-color:var(--gold);}
+  .school-item .name{flex:1;line-height:1.25;}
+  .school-item .count{color:var(--slate);font-size:11px;flex:none;}
+  .select-all-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:11.5px;}
+  .select-all-row button{background:none;border:none;color:var(--gold);font-weight:600;cursor:pointer;font-size:11.5px;padding:0;}
+  .select-all-row button:hover{text-decoration:underline;}
+
+  .btn{
+    width:100%;padding:11px 14px;border-radius:8px;border:none;font-family:'Inter',sans-serif;font-weight:600;font-size:13.5px;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;transition:.15s;
+  }
+  .btn-primary{background:var(--ink);color:#fff;}
+  .btn-primary:hover{background:#132038;}
+  .btn-secondary{background:#fff;color:var(--ink);border:1.5px solid var(--ink);}
+  .btn-secondary:hover{background:#EAF4FD;}
+  .btn-gold{background:var(--gold);color:#fff;}
+  .btn-gold:hover{background:#00649b;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  .empty-hint{font-size:11.5px;color:var(--slate);line-height:1.5;margin-top:6px;}
+  .error-msg{background:#FBEAEA;border:1px solid #E0B4B4;color:var(--danger);font-size:12px;padding:8px 10px;border-radius:7px;margin-top:8px;line-height:1.4;}
+
+  /* ---------- MAIN ---------- */
+  .main{flex:1;padding:36px 40px 80px;display:flex;flex-direction:column;align-items:center;min-width:0;}
+  .main-empty{margin-top:14vh;text-align:center;color:var(--slate);max-width:380px;}
+  .main-empty .icon{font-size:34px;margin-bottom:14px;opacity:.5;}
+  .main-empty h2{font-family:'Source Serif 4',serif;font-size:19px;color:var(--ink);margin:0 0 8px;}
+  .main-empty p{font-size:13px;line-height:1.6;margin:0;}
+
+  .sheets-wrap{width:100%;max-width:800px;display:flex;flex-direction:column;gap:28px;}
+
+  .sheet{
+    background:var(--card);border:1px solid var(--line);
+    box-shadow:0 1px 3px rgba(27,42,69,.06), 0 8px 24px rgba(27,42,69,.05);
+    padding:12mm 14mm 22mm;position:relative;width:100%;aspect-ratio:210/297;overflow:hidden;
+  }
+  .sheet-badge{position:absolute;bottom:8mm;right:14mm;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--slate);}
+  .sheet-header{text-align:center;border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:12px;}
+  .sheet-header .org{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:2px;}
+  .sheet-header .title{font-family:'Source Serif 4',serif;font-weight:700;font-size:17px;color:var(--ink);margin:4px 0 2px;}
+  .sheet-header .subtitle{font-size:11px;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
+
+  .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 22px;font-size:11.5px;margin-bottom:12px;}
+  .meta-item{display:flex;border-bottom:1px dotted var(--line);padding-bottom:3px;}
+  .meta-item .k{color:var(--slate);flex:none;margin-right:6px;}
+  .meta-item .v{font-weight:600;color:var(--ink);}
+  .meta-item.full{grid-column:1/-1;}
+
+  table.roll{width:100%;border-collapse:collapse;font-size:11px;}
+  table.roll thead th{
+    background:var(--ink);color:#fff;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;
+    padding:6px 6px;text-align:left;font-weight:600;
+  }
+  table.roll thead th.c-n{width:26px;text-align:center;}
+  table.roll thead th.c-sig{width:140px;}
+  .sheets-wrap.land{max-width:1122px;}
+  .sheet.land{aspect-ratio:297/210;}
+  table.roll tbody td{padding:0 6px;height:var(--rowh,6.4mm);border-bottom:1px solid var(--line);vertical-align:middle;}
+  table.roll tbody tr:nth-child(even){background:#F7FAFD;}
+  table.roll td.c-n{text-align:center;color:var(--slate);}
+  table.roll td.mono{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-soft);}
+
+  .sheet-footer{
+    position:absolute;bottom:12mm;left:14mm;right:14mm;display:flex;justify-content:space-between;align-items:flex-end;
+    font-size:10px;color:var(--slate);gap:16px;
+  }
+  .sheet-footer .total{font-weight:600;color:var(--ink);white-space:nowrap;}
+
+  @media (max-width: 860px){
+    .app{flex-direction:column;}
+    .sidebar{width:100%;height:auto;position:relative;}
+    .main{padding:24px 14px 60px;}
+  }
+
+  /* ---------- PRINT ---------- */
+  @media print{
+    @page{ size:A4; margin:0; }
+    body{background:#fff;}
+    .sidebar{display:none;}
+    .main{padding:0;}
+    .sheets-wrap{max-width:none;gap:0;}
+    .sheet{
+      box-shadow:none;border:none;page-break-after:always;break-after:page;
+      width:210mm;height:297mm;aspect-ratio:auto;padding:12mm 14mm 22mm;
+    }
+    .sheet.land{width:297mm;height:210mm;aspect-ratio:auto;}
+    .sheets-wrap.land{max-width:none;}
+    .sheet:last-child{page-break-after:auto;break-after:auto;}
+    .no-print{display:none !important;}
+    table.roll thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar no-print">
+    <div class="brand">
+      <div class="brand-mark">LF</div>
+      <div class="brand-text">
+        <h1>Listagem de Frequência</h1>
+        <span>Gerador flexível</span>
+      </div>
+    </div>
+
+    <!-- 1. IMPORT -->
+    <div class="panel-section">
+      <div class="panel-label"><span class="num">1</span>Importar dados</div>
+      <textarea id="dataInput" placeholder="Cole aqui os dados com a linha de cabeçalho.&#10;Qualquer quantidade de colunas, separadas por TAB, ; ou ,"></textarea>
+      <label class="file-drop" id="fileDrop">
+        📄 Clique para escolher um arquivo (.csv, .tsv, .txt)
+        <input type="file" id="fileInput" accept=".csv,.tsv,.txt">
+      </label>
+      <div id="parseError"></div>
+      <button class="btn btn-primary" id="processBtn">Processar dados</button>
+    </div>
+
+    <!-- 2. HEADER CONFIG -->
+    <div class="panel-section" id="configSection" style="display:none;">
+      <div class="panel-label"><span class="num">2</span>Cabeçalho da avaliação</div>
+      <div class="field">
+        <label for="orgInput">Instituição (opcional)</label>
+        <input type="text" id="orgInput" placeholder="Ex: Secretaria de Estado da Educação do Piauí">
+      </div>
+      <div class="field">
+        <label for="titleInput">Título da avaliação</label>
+        <input type="text" id="titleInput" placeholder="Ex: Avaliação Diagnóstica 2026 — 1ª Etapa">
+      </div>
+      <div class="field">
+        <label for="dateInput">Data de aplicação (opcional)</label>
+        <input type="text" id="dateInput" placeholder="Ex: 12/09/2026">
+      </div>
+    </div>
+
+    <!-- 3. COLUMNS -->
+    <div class="panel-section" id="columnsSection" style="display:none;">
+      <div class="panel-label"><span class="num">3</span>Colunas detectadas</div>
+      <div class="stat-row" id="statRow"></div>
+      <p class="hint" style="margin-top:12px;">Renomeie e escolha onde cada coluna aparece: <b>na tabela</b>, <b>no cabeçalho</b> da folha (valor do grupo) ou <b>oculta</b>.</p>
+      <div class="col-list" id="colList"></div>
+      <div style="height:12px;"></div>
+      <label class="check-line"><input type="checkbox" id="optNumber" checked> Coluna de numeração (Nº)</label>
+      <label class="check-line"><input type="checkbox" id="optSig" checked> Coluna de assinatura</label>
+      <div class="field" id="sigLabelField">
+        <label for="sigLabel">Título da coluna de assinatura</label>
+        <input type="text" id="sigLabel" value="Assinatura">
+      </div>
+      <label class="check-line"><input type="checkbox" id="optApplicator" checked> Linha de assinatura do(a) aplicador(a) no rodapé</label>
+      <label class="check-line"><input type="checkbox" id="optLogos" checked> Mostrar imagens no topo (imagens/a.jpg e b.jpg)</label>
+    </div>
+
+    <!-- 4. SEPARAR -->
+    <div class="panel-section" id="splitSection" style="display:none;">
+      <div class="panel-label"><span class="num">4</span>Separar folhas por</div>
+      <p class="hint">Marque uma ou mais colunas. Cada combinação de valores gera uma folha (ou mais, se passar do limite de linhas). Sem seleção, gera uma lista única.</p>
+      <div class="group-cols" id="groupCols"></div>
+      <div class="field">
+        <label for="sortSelect">Ordenar linhas por</label>
+        <select id="sortSelect"></select>
+      </div>
+      <div class="field">
+        <label for="orientation">Orientação da folha</label>
+        <select id="orientation">
+          <option value="portrait">Retrato</option>
+          <option value="landscape">Paisagem</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="rowHeight">Altura das linhas</label>
+        <select id="rowHeight">
+          <option value="6.4">Normal</option>
+          <option value="8.5">Média</option>
+          <option value="10.5">Alta</option>
+          <option value="13">Muito alta</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sigWidth">Largura da coluna de assinatura</label>
+        <select id="sigWidth">
+          <option value="140">Normal</option>
+          <option value="220">Larga</option>
+          <option value="300">Muito larga</option>
+          <option value="0">Ocupar o espaço restante</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="rowsPerPage">Linhas por página <span style="color:var(--slate);font-weight:400;">(sugerido automaticamente)</span></label>
+        <input type="number" id="rowsPerPage" min="5" max="60" value="26">
+      </div>
+    </div>
+
+    <!-- 5. GRUPOS -->
+    <div class="panel-section" id="groupsSection" style="display:none;">
+      <div class="panel-label"><span class="num">5</span>Folhas a gerar</div>
+      <input type="text" class="search-box" id="groupSearch" placeholder="Buscar...">
+      <div class="select-all-row">
+        <span id="selCount">0 selecionadas</span>
+        <span>
+          <button id="selAllBtn">Selecionar todas</button> ·
+          <button id="selNoneBtn">Nenhuma</button>
+        </span>
+      </div>
+      <div class="school-list" id="groupList"></div>
+    </div>
+
+    <!-- 6. ACTIONS -->
+    <div class="panel-section" id="actionsSection" style="display:none;">
+      <div class="panel-label"><span class="num">6</span>Gerar</div>
+      <button class="btn btn-gold" id="generateBtn">Gerar listagens selecionadas</button>
+      <button class="btn btn-secondary" id="printBtn" disabled>🖨️ Imprimir / Salvar PDF</button>
+      <button class="btn btn-secondary" id="csvBtn" disabled>⬇️ Exportar CSV</button>
+      <div class="empty-hint">A impressão gera uma página A4 por folha, pronta para "Salvar como PDF" no diálogo de impressão.</div>
+    </div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="main">
+    <div class="main-empty" id="emptyState">
+      <div class="icon">🗂️</div>
+      <h2>Nenhuma listagem gerada</h2>
+      <p>Cole ou importe os dados na barra lateral. O gerador detecta as colunas, e você escolhe quais mostrar e como separar as folhas.</p>
+    </div>
+    <div class="sheets-wrap" id="sheetsWrap"></div>
+  </main>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- STATE ----------
+  let headers = [];          // nomes originais das colunas
+  let rows = [];             // array de arrays (valores por coluna)
+  let colCfg = [];           // [{label, role:'table'|'header'|'hide'}]
+  let groupColSet = new Set();
+  let groupsArr = [];        // [{label, rows:[...]}]
+
+  const $ = id => document.getElementById(id);
+  const dataInput = $('dataInput'), fileInput = $('fileInput'), fileDrop = $('fileDrop');
+  const parseError = $('parseError'), processBtn = $('processBtn');
+  const configSection = $('configSection'), columnsSection = $('columnsSection');
+  const splitSection = $('splitSection'), groupsSection = $('groupsSection'), actionsSection = $('actionsSection');
+  const orgInput = $('orgInput'), titleInput = $('titleInput'), dateInput = $('dateInput');
+  const statRow = $('statRow'), colList = $('colList'), groupColsEl = $('groupCols');
+  const sortSelect = $('sortSelect'), rowsPerPageEl = $('rowsPerPage');
+  const optNumber = $('optNumber'), optSig = $('optSig'), sigLabel = $('sigLabel'), sigLabelField = $('sigLabelField');
+  const optApplicator = $('optApplicator'), optLogos = $('optLogos');
+  const groupSearch = $('groupSearch'), groupList = $('groupList'), selCount = $('selCount');
+  const selAllBtn = $('selAllBtn'), selNoneBtn = $('selNoneBtn');
+  const generateBtn = $('generateBtn'), printBtn = $('printBtn'), csvBtn = $('csvBtn');
+  const emptyState = $('emptyState'), sheetsWrap = $('sheetsWrap');
+
+  // ---------- FILE IMPORT ----------
+  fileDrop.addEventListener('click', e => { if(e.target !== fileInput) fileInput.click(); });
+  fileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => { dataInput.value = ev.target.result; };
+    reader.onerror = () => showError('Não foi possível ler o arquivo selecionado.');
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  function showError(msg){
+    parseError.innerHTML = msg ? '<div class="error-msg">'+escapeHtml(msg)+'</div>' : '';
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ---------- PARSING ----------
+  function detectDelimiter(line){
+    const counts = { '\t': (line.match(/\t/g)||[]).length, ';': (line.match(/;/g)||[]).length, ',': (line.match(/,/g)||[]).length };
+    let best = '\t', bestCount = counts['\t'];
+    for(const d of [';', ',']){
+      if(counts[d] > bestCount){ best = d; bestCount = counts[d]; }
+    }
+    return bestCount > 0 ? best : '\t';
+  }
+
+  function splitLine(line, delim){
+    if(delim === '\t') return line.split('\t');
+    const out = [];
+    let cur = '', inQuotes = false;
+    for(let i=0;i<line.length;i++){
+      const ch = line[i];
+      if(ch === '"'){
+        if(inQuotes && line[i+1] === '"'){ cur+='"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if(ch === delim && !inQuotes){
+        out.push(cur); cur='';
+      } else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  }
+
+  function parseData(raw){
+    const lines = raw.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l => l.trim().length>0);
+    if(lines.length < 2) throw new Error('Cole ou importe pelo menos uma linha de cabeçalho e uma linha de dados.');
+    const delim = detectDelimiter(lines[0]);
+    let hdr = splitLine(lines[0], delim).map(h => h.trim());
+    // remove colunas finais totalmente vazias no cabeçalho
+    while(hdr.length && !hdr[hdr.length-1]) hdr.pop();
+    if(hdr.length === 0) throw new Error('Não foi possível identificar o cabeçalho.');
+    // nomes vazios / duplicados
+    const seen = {};
+    hdr = hdr.map((h,i) => {
+      let name = h || ('Coluna ' + (i+1));
+      if(seen[name]){ seen[name]++; name = name + ' (' + seen[name] + ')'; } else seen[name] = 1;
+      return name;
+    });
+    const data = [];
+    for(let i=1;i<lines.length;i++){
+      const cols = splitLine(lines[i], delim).map(c => (c||'').trim());
+      if(cols.every(c => !c)) continue;
+      const row = [];
+      for(let j=0;j<hdr.length;j++) row.push(cols[j] || '');
+      data.push(row);
+    }
+    if(data.length === 0) throw new Error('Nenhuma linha de dados válida foi encontrada após o cabeçalho.');
+    return { hdr, data };
+  }
+
+  function norm(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  function isMonoCol(name){ return /\b(ra|inep|matricula|cpf|codigo|cod|id)\b/.test(norm(name)); }
+  function isNameCol(name){ return /(estudante|aluno|nome)/.test(norm(name)); }
+  function isGroupLike(name){ return /(gre|municipio|escola|turma|serie|turno|inep)/.test(norm(name)); }
+
+  // ---------- PROCESS ----------
+  processBtn.addEventListener('click', () => {
+    showError('');
+    const raw = dataInput.value;
+    if(!raw || !raw.trim()){
+      showError('Cole os dados na caixa de texto ou importe um arquivo antes de processar.');
+      return;
+    }
+    try{
+      const p = parseData(raw);
+      headers = p.hdr; rows = p.data;
+      // configuração padrão: colunas que parecem agrupadoras vão pro cabeçalho
+      colCfg = headers.map(h => ({ label: h, role: (isGroupLike(h) && !isNameCol(h)) ? 'header' : 'table' }));
+      // se nenhuma coluna ficou na tabela, volta tudo pra tabela
+      if(!colCfg.some(c => c.role==='table')) colCfg.forEach(c => c.role='table');
+      // agrupamento padrão: escola (se existir), senão nenhum
+      groupColSet = new Set();
+      const esc = headers.findIndex(h => /escola/.test(norm(h)));
+      if(esc > -1) groupColSet.add(esc);
+      renderStats(); renderColumns(); renderGroupCols(); renderSortOptions();
+      regroup();
+      [configSection, columnsSection, splitSection, groupsSection, actionsSection].forEach(s => s.style.display='block');
+    }catch(err){
+      showError(err.message);
+      [configSection, columnsSection, splitSection, groupsSection, actionsSection].forEach(s => s.style.display='none');
+    }
+  });
+
+  function renderStats(){
+    statRow.innerHTML = `
+      <div class="stat"><b>${headers.length}</b><span>Colunas</span></div>
+      <div class="stat"><b>${rows.length}</b><span>Linhas</span></div>
+    `;
+  }
+
+  // ---------- COLUMNS UI ----------
+  function renderColumns(){
+    colList.innerHTML = '';
+    headers.forEach((h,i) => {
+      const div = document.createElement('div');
+      div.className = 'col-item';
+      div.innerHTML = `
+        <div class="orig">${escapeHtml(h)}</div>
+        <input type="text" value="${escapeHtml(colCfg[i].label)}" data-i="${i}" class="col-label">
+        <select data-i="${i}" class="col-role">
+          <option value="table">Na tabela</option>
+          <option value="header">No cabeçalho</option>
+          <option value="hide">Oculta</option>
+        </select>`;
+      colList.appendChild(div);
+      div.querySelector('.col-role').value = colCfg[i].role;
+    });
+    colList.querySelectorAll('.col-label').forEach(inp => inp.addEventListener('input', e => {
+      colCfg[+e.target.dataset.i].label = e.target.value;
+      renderGroupCols(); renderSortOptions(true); renderGroupList(groupSearch.value);
+    }));
+    colList.querySelectorAll('.col-role').forEach(sel => sel.addEventListener('change', e => {
+      colCfg[+e.target.dataset.i].role = e.target.value;
+    }));
+  }
+
+  function renderGroupCols(){
+    groupColsEl.innerHTML = '';
+    headers.forEach((h,i) => {
+      const lab = document.createElement('label');
+      lab.className = 'chip' + (groupColSet.has(i) ? ' on' : '');
+      lab.innerHTML = `<input type="checkbox" data-i="${i}" ${groupColSet.has(i)?'checked':''}>${escapeHtml(colCfg[i].label || h)}`;
+      groupColsEl.appendChild(lab);
+    });
+    groupColsEl.querySelectorAll('input').forEach(cb => cb.addEventListener('change', e => {
+      const i = +e.target.dataset.i;
+      if(e.target.checked){
+        groupColSet.add(i);
+        // coluna usada para separar vai automaticamente para o cabeçalho
+        if(colCfg[i].role === 'table'){
+          colCfg[i].role = 'header';
+          if(!colCfg.some(c => c.role==='table')) colCfg[i].role = 'table';
+        }
+      } else {
+        groupColSet.delete(i);
+      }
+      e.target.parentElement.classList.toggle('on', e.target.checked);
+      renderColumns();
+      regroup();
+    }));
+  }
+
+  function renderSortOptions(keep){
+    const prev = keep ? sortSelect.value : null;
+    let opts = '<option value="-1">Ordem original dos dados</option>';
+    headers.forEach((h,i) => { opts += `<option value="${i}">${escapeHtml(colCfg[i].label || h)}</option>`; });
+    sortSelect.innerHTML = opts;
+    if(prev !== null) sortSelect.value = prev;
+    else {
+      const ni = headers.findIndex(isNameCol);
+      sortSelect.value = ni > -1 ? String(ni) : '-1';
+    }
+  }
+
+  const orientationEl = $('orientation'), rowHeightEl = $('rowHeight'), sigWidthEl = $('sigWidth');
+
+  function suggestRows(){
+    const pageH = orientationEl.value === 'landscape' ? 210 : 297;
+    const headerBlock = optLogos.checked ? 68 : 48;
+    const rowH = parseFloat(rowHeightEl.value) || 6.4;
+    const n = Math.floor((pageH - 34 - 8 - headerBlock - 10) / rowH);
+    rowsPerPageEl.value = Math.max(5, n);
+  }
+  function applyLayoutDefaults(){
+    // em paisagem, sugere assinatura mais larga e linhas mais altas
+    if(orientationEl.value === 'landscape'){
+      if(sigWidthEl.value === '140') sigWidthEl.value = '0';
+      if(rowHeightEl.value === '6.4') rowHeightEl.value = '8.5';
+    }
+    suggestRows();
+  }
+  orientationEl.addEventListener('change', applyLayoutDefaults);
+  rowHeightEl.addEventListener('change', suggestRows);
+  optLogos.addEventListener('change', suggestRows);
+
+  optSig.addEventListener('change', () => { sigLabelField.style.display = optSig.checked ? 'block' : 'none'; });
+
+  // ---------- GROUPING ----------
+  function cmp(a,b){ return String(a).localeCompare(String(b),'pt-BR',{numeric:true,sensitivity:'base'}); }
+
+  function regroup(){
+    const gc = Array.from(groupColSet).sort((a,b)=>a-b);
+    if(gc.length === 0){
+      groupsArr = [{ label:'Lista única (todas as linhas)', gvals:[], rows: rows.slice() }];
+    } else {
+      const map = new Map();
+      rows.forEach(r => {
+        const vals = gc.map(i => r[i]);
+        const key = vals.join('\u0001');
+        if(!map.has(key)) map.set(key, { vals, rows:[] });
+        map.get(key).rows.push(r);
+      });
+      groupsArr = Array.from(map.values()).map(g => ({
+        label: g.vals.map(v => v || '—').join(' · '),
+        gvals: g.vals,
+        rows: g.rows
+      }));
+      groupsArr.sort((a,b) => {
+        for(let k=0;k<gc.length;k++){
+          const c = cmp(a.gvals[k], b.gvals[k]);
+          if(c !== 0) return c;
+        }
+        return 0;
+      });
+    }
+    groupSearch.value = '';
+    renderGroupList('');
+  }
+
+  function renderGroupList(filter){
+    filter = norm(filter||'');
+    // preserva seleção atual (por índice) quando só estiver filtrando
+    const prevChecked = new Set(Array.from(groupList.querySelectorAll('.group-check:checked')).map(cb => +cb.dataset.i));
+    const hadList = groupList.querySelectorAll('.group-check').length > 0 && groupList.dataset.n === String(groupsArr.length);
+    groupList.dataset.n = groupsArr.length;
+    groupList.innerHTML = '';
+    groupsArr.forEach((g,i) => {
+      if(filter && !norm(g.label).includes(filter)) return;
+      const checked = hadList ? prevChecked.has(i) : true;
+      const item = document.createElement('label');
+      item.className = 'school-item';
+      item.innerHTML = `
+        <input type="checkbox" class="group-check" data-i="${i}" ${checked?'checked':''}>
+        <span class="name">${escapeHtml(g.label)}</span>
+        <span class="count">${g.rows.length}</span>`;
+      groupList.appendChild(item);
+    });
+    updateSelCount();
+    groupList.querySelectorAll('.group-check').forEach(cb => cb.addEventListener('change', updateSelCount));
+  }
+
+  function updateSelCount(){
+    const total = groupList.querySelectorAll('.group-check').length;
+    const checked = groupList.querySelectorAll('.group-check:checked').length;
+    selCount.textContent = checked + ' de ' + total + ' selecionadas';
+  }
+
+  groupSearch.addEventListener('input', () => renderGroupList(groupSearch.value));
+  selAllBtn.addEventListener('click', () => { groupList.querySelectorAll('.group-check').forEach(cb=>cb.checked=true); updateSelCount(); });
+  selNoneBtn.addEventListener('click', () => { groupList.querySelectorAll('.group-check').forEach(cb=>cb.checked=false); updateSelCount(); });
+
+  // ---------- GENERATE ----------
+  function selectedGroups(){
+    return Array.from(groupList.querySelectorAll('.group-check:checked')).map(cb => groupsArr[+cb.dataset.i]);
+  }
+
+  generateBtn.addEventListener('click', () => {
+    const sel = selectedGroups();
+    if(sel.length === 0){ alert('Selecione ao menos uma folha para gerar.'); return; }
+
+    const opts = {
+      org: orgInput.value.trim(),
+      title: titleInput.value.trim() || 'Avaliação',
+      date: dateInput.value.trim(),
+      perPage: Math.max(5, Math.min(60, parseInt(rowsPerPageEl.value,10) || 26)),
+      sortIdx: parseInt(sortSelect.value,10),
+      number: optNumber.checked,
+      sig: optSig.checked,
+      sigLabel: sigLabel.value.trim() || 'Assinatura',
+      applicator: optApplicator.checked,
+      logos: optLogos.checked,
+      land: orientationEl.value === 'landscape',
+      rowH: parseFloat(rowHeightEl.value) || 6.4,
+      sigW: parseInt(sigWidthEl.value,10)
+    };
+
+    // orientação de impressão
+    let ps = document.getElementById('pageStyle');
+    if(!ps){ ps = document.createElement('style'); ps.id = 'pageStyle'; document.head.appendChild(ps); }
+    ps.textContent = '@media print{ @page{ size:A4 ' + (o_land(opts)) + '; margin:0; } }';
+    sheetsWrap.classList.toggle('land', opts.land);
+
+    const sheets = [];
+    sel.forEach((g, gi) => {
+      let list = g.rows.slice();
+      if(opts.sortIdx > -1) list.sort((a,b) => cmp(a[opts.sortIdx], b[opts.sortIdx]));
+      const pages = [];
+      for(let i=0;i<list.length;i+=opts.perPage) pages.push(list.slice(i, i+opts.perPage));
+      pages.forEach((chunk, pi) => sheets.push({ g, gi, pi, pages: pages.length, chunk, offset: pi*opts.perPage, groupTotal: sel.length, listLen: list.length }));
+    });
+
+    sheetsWrap.innerHTML = '';
+    sheets.forEach(s => sheetsWrap.appendChild(buildSheet(s, opts)));
+    emptyState.style.display = 'none';
+    sheetsWrap.style.display = 'flex';
+    printBtn.disabled = false;
+    csvBtn.disabled = false;
+  });
+
+  function o_land(o){ return o.land ? 'landscape' : 'portrait'; }
+
+  function headerItems(g){
+    const items = [];
+    colCfg.forEach((c,i) => {
+      if(c.role !== 'header') return;
+      const vals = [];
+      g.rows.forEach(r => { const v = r[i]; if(v && !vals.includes(v)) vals.push(v); });
+      let txt = vals.length === 0 ? '—' : (vals.length > 3 ? vals.slice(0,3).join(', ') + ' (+' + (vals.length-3) + ')' : vals.join(', '));
+      items.push({ k: c.label || headers[i], v: txt, full: txt.length > 34 });
+    });
+    return items;
+  }
+
+  function buildSheet(s, o){
+    const sheet = document.createElement('div');
+    sheet.className = 'sheet' + (o.land ? ' land' : '');
+    sheet.style.setProperty('--rowh', o.rowH + 'mm');
+
+    const tableCols = [];
+    colCfg.forEach((c,i) => { if(c.role === 'table') tableCols.push(i); });
+
+    const metaHtml = headerItems(s.g).map(it =>
+      `<div class="meta-item${it.full?' full':''}"><span class="k">${escapeHtml(it.k)}:</span><span class="v">${escapeHtml(it.v)}</span></div>`
+    ).join('') + (o.date ? `<div class="meta-item"><span class="k">Data:</span><span class="v">${escapeHtml(o.date)}</span></div>` : '');
+
+    const thead = '<tr>' +
+      (o.number ? '<th class="c-n">Nº</th>' : '') +
+      tableCols.map(i => `<th>${escapeHtml(colCfg[i].label || headers[i])}</th>`).join('') +
+      (o.sig ? `<th class="c-sig"${o.sigW ? ` style="width:${o.sigW}px"` : ' style="width:45%"'}>${escapeHtml(o.sigLabel)}</th>` : '') +
+      '</tr>';
+
+    const tbody = s.chunk.map((r,ri) => '<tr>' +
+      (o.number ? `<td class="c-n">${s.offset + ri + 1}</td>` : '') +
+      tableCols.map(i => `<td${isMonoCol(headers[i])?' class="mono"':''}>${escapeHtml(r[i] || (isMonoCol(headers[i]) ? '—' : ''))}</td>`).join('') +
+      (o.sig ? '<td class="c-sig"></td>' : '') +
+      '</tr>').join('');
+
+    const badge = String(s.gi+1).padStart(2,'0') + '/' + String(s.groupTotal).padStart(2,'0') +
+      (s.pages > 1 ? ' · pág. ' + (s.pi+1) + '/' + s.pages : '');
+
+    sheet.innerHTML = `
+      ${o.logos ? `<div class="imagens-laterais">
+        <img src="imagens/a.jpg" alt="" class="cover-image" onerror="this.style.visibility='hidden'">
+        <img src="imagens/b.jpg" alt="" class="cover-image2" onerror="this.style.visibility='hidden'">
+      </div>` : ''}
+      <div class="sheet-header">
+        ${o.org ? `<div class="org">${escapeHtml(o.org)}</div>` : ''}
+        <div class="title">${escapeHtml(o.title)}</div>
+        <div class="subtitle">Listagem de Frequência</div>
+      </div>
+      ${metaHtml ? `<div class="meta-grid">${metaHtml}</div>` : ''}
+      <table class="roll">
+        <thead>${thead}</thead>
+        <tbody>${tbody}</tbody>
+      </table>
+      <div class="sheet-footer">
+        <span class="total">Total de Alunos: ${s.listLen}</span>
+        ${o.applicator ? '<span>Assinatura do(a) aplicador(a): ________________________________________</span>' : '<span></span>'}
+      </div>
+      <div class="sheet-badge">${badge}</div>
+    `;
+    return sheet;
+  }
+
+  // ---------- PRINT ----------
+  printBtn.addEventListener('click', () => window.print());
+
+  // ---------- CSV ----------
+  csvBtn.addEventListener('click', () => {
+    let sel = selectedGroups();
+    if(sel.length === 0) sel = groupsArr;
+    const lines = [headers.map(csvEscape).join(';')];
+    sel.forEach(g => g.rows.forEach(r => lines.push(r.map(csvEscape).join(';'))));
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'listagem_frequencia.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  function csvEscape(v){
+    v = (v==null ? '' : String(v));
+    return /[;"\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v;
+  }
+
+})();
+</script>
+</body>
+</html>
